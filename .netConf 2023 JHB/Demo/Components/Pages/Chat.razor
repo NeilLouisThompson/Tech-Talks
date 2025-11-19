@@ -1,0 +1,114 @@
+﻿@* @page "/Chat"
+@using Microsoft.AspNetCore.SignalR.Client
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+
+<PageTitle>Chat</PageTitle>
+
+<div class="form-group">
+    <label>
+        Room Name:
+        <input @bind="roomInput" size="50" />
+    </label>
+</div>
+
+<div class="form-group">
+    <label>
+        User:
+        <input @bind="userInput" />
+    </label>
+</div>
+<div class="form-group">
+    <label>
+        Message:
+        <input @bind="messageInput" size="50" />
+    </label>
+</div>
+
+
+<button class="btn btn-primary" @onclick="SendGlobalMessage" disabled="@(!IsConnected)">Send Global</button>
+<button class="btn btn-primary" @onclick="SendRoomMessage" disabled="@(!IsConnected)">Send Room</button>
+<button class="btn btn-primary" @onclick="JoinRoom" disabled="@(!IsConnected)">Join Room</button>
+<button class="btn btn-primary" @onclick="LeaveRoom" disabled="@(!IsConnected)">Leave Room</button>
+
+<hr>
+
+<ul id="messagesList">
+    @foreach (var message in messages)
+    {
+        <li>@message</li>
+    }
+</ul>
+
+@code {
+    // TODO Step 06 -- Add Component and code
+    private HubConnection? hubConnection;
+    private List<string> messages = new List<string>();
+    private string? userInput;
+    private string? messageInput;
+    private string? roomInput;
+    public bool IsConnected => hubConnection?.State == HubConnectionState.Connected;
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
+            .Build();
+
+        hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
+        {
+            var encodedMsg = $"{user}: {message}";
+            messages.Add(encodedMsg);
+            InvokeAsync(StateHasChanged);
+        });
+
+        hubConnection.On<string>("SystemMessage", (message) =>
+        {
+            messages.Add(message);
+            InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    private async Task SendGlobalMessage()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.SendAsync("SendGlobalMessage", userInput, messageInput);
+        }
+    }
+
+    private async Task SendRoomMessage()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.SendAsync("SendRoomMessage", userInput, messageInput, roomInput);
+        }
+    }
+
+    private async Task JoinRoom()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.SendAsync("JoinRoom", userInput, roomInput);
+        }
+    }
+
+    private async Task LeaveRoom()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.SendAsync("LeaveRoom", userInput, roomInput);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}   *@

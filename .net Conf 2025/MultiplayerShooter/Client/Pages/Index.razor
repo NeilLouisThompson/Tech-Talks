@@ -1,0 +1,19 @@
+﻿@page "/"
+@inject NavigationManager Navigation
+
+<PageTitle>Multiplayer Shooter</PageTitle>
+
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; text-align: center;">
+    <h1 style="font-size: 3rem; margin-bottom: 20px;">🚀 Multiplayer Shooter</h1>
+    <p style="font-size: 1.2rem; margin-bottom: 40px;">A real-time multiplayer game built with Blazor WASM & SignalR</p>
+    <button @onclick="StartGame" style="padding: 15px 40px; font-size: 1.2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold;">
+        Play Now
+    </button>
+</div>
+
+@code {
+    private void StartGame()
+    {
+        Navigation.NavigateTo("/game");
+    }
+}

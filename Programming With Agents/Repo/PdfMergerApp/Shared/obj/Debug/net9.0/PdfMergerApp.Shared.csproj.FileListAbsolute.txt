@@ -1,0 +1,11 @@
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\Programming With Agents\Repo\PdfMergerApp\Shared\bin\Debug\net9.0\PdfMergerApp.Shared.deps.json
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\Programming With Agents\Repo\PdfMergerApp\Shared\bin\Debug\net9.0\PdfMergerApp.Shared.dll
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\Programming With Agents\Repo\PdfMergerApp\Shared\bin\Debug\net9.0\PdfMergerApp.Shared.pdb
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\Programming With Agents\Repo\PdfMergerApp\Shared\obj\Debug\net9.0\PdfMergerApp.Shared.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\Programming With Agents\Repo\PdfMergerApp\Shared\obj\Debug\net9.0\PdfMergerApp.Shared.AssemblyInfoInputs.cache
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\Programming With Agents\Repo\PdfMergerApp\Shared\obj\Debug\net9.0\PdfMergerApp.Shared.AssemblyInfo.cs
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\Programming With Agents\Repo\PdfMergerApp\Shared\obj\Debug\net9.0\PdfMergerApp.Shared.csproj.CoreCompileInputs.cache
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\Programming With Agents\Repo\PdfMergerApp\Shared\obj\Debug\net9.0\PdfMergerApp.Shared.dll
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\Programming With Agents\Repo\PdfMergerApp\Shared\obj\Debug\net9.0\refint\PdfMergerApp.Shared.dll
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\Programming With Agents\Repo\PdfMergerApp\Shared\obj\Debug\net9.0\PdfMergerApp.Shared.pdb
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\Programming With Agents\Repo\PdfMergerApp\Shared\obj\Debug\net9.0\ref\PdfMergerApp.Shared.dll

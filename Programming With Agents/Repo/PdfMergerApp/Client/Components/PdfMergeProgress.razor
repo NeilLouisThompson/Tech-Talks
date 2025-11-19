@@ -1,0 +1,229 @@
+@using PdfMergerApp.Shared.Models
+
+<div class="card">
+    <div class="card-header">
+        <h5>Merge Progress</h5>
+    </div>
+    <div class="card-body">
+        @if (CurrentProgress.Status == MergeStatus.Idle)
+        {
+            <div class="text-center text-muted">
+                <i class="fas fa-file-pdf fa-3x mb-3"></i>
+                <p>Ready to merge PDFs</p>
+            </div>
+        }
+        else
+        {
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold">Status:</span>
+                    <span class="badge @GetStatusBadgeClass()">@GetStatusText()</span>
+                </div>
+                
+                @if (!string.IsNullOrEmpty(CurrentProgress.Message))
+                {
+                    <p class="mb-2">@CurrentProgress.Message</p>
+                }
+
+                @if (CurrentProgress.Status != MergeStatus.Failed)
+                {
+                    <div class="progress mb-2" style="height: 20px;">
+                        <div class="progress-bar @GetProgressBarClass()" 
+                             role="progressbar" 
+                             style="width: @(CurrentProgress.PercentComplete)%"
+                             aria-valuenow="@CurrentProgress.PercentComplete" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            @CurrentProgress.PercentComplete%
+                        </div>
+                    </div>
+                }
+
+                @if (CurrentProgress.Status == MergeStatus.Failed && !string.IsNullOrEmpty(CurrentProgress.ErrorDetails))
+                {
+                    <div class="alert alert-danger">
+                        <small>@CurrentProgress.ErrorDetails</small>
+                    </div>
+                }
+
+                @if (CurrentProgress.Status == MergeStatus.Completed)
+                {
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        PDF merge completed successfully!
+                    </div>
+                }
+            </div>
+
+            <div class="timeline">
+                <div class="timeline-item @(IsStepCompleted(MergeStatus.Uploading) ? "completed" : "")">
+                    <div class="timeline-marker">
+                        @if (IsStepCompleted(MergeStatus.Uploading))
+                        {
+                            <i class="fas fa-check"></i>
+                        }
+                        else if (CurrentProgress.Status == MergeStatus.Uploading)
+                        {
+                            <div class="spinner-border spinner-border-sm"></div>
+                        }
+                        else
+                        {
+                            <i class="fas fa-upload"></i>
+                        }
+                    </div>
+                    <div class="timeline-content">
+                        <span>Uploading files</span>
+                    </div>
+                </div>
+
+                <div class="timeline-item @(IsStepCompleted(MergeStatus.Merging) ? "completed" : "")">
+                    <div class="timeline-marker">
+                        @if (IsStepCompleted(MergeStatus.Merging))
+                        {
+                            <i class="fas fa-check"></i>
+                        }
+                        else if (CurrentProgress.Status == MergeStatus.Merging)
+                        {
+                            <div class="spinner-border spinner-border-sm"></div>
+                        }
+                        else
+                        {
+                            <i class="fas fa-cogs"></i>
+                        }
+                    </div>
+                    <div class="timeline-content">
+                        <span>Merging PDFs</span>
+                    </div>
+                </div>
+
+                <div class="timeline-item @(CurrentProgress.Status == MergeStatus.Completed ? "completed" : "")">
+                    <div class="timeline-marker">
+                        @if (CurrentProgress.Status == MergeStatus.Completed)
+                        {
+                            <i class="fas fa-check"></i>
+                        }
+                        else
+                        {
+                            <i class="fas fa-download"></i>
+                        }
+                    </div>
+                    <div class="timeline-content">
+                        <span>Download ready</span>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 20px;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 20px;
+    }
+
+    .timeline-item:not(:last-child)::before {
+        content: '';
+        position: absolute;
+        left: 7px;
+        top: 20px;
+        height: calc(100% - 10px);
+        width: 2px;
+        background-color: #dee2e6;
+    }
+
+    .timeline-item.completed:not(:last-child)::before {
+        background-color: #28a745;
+    }
+
+    .timeline-marker {
+        position: absolute;
+        left: -5px;
+        top: 0;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background-color: #fff;
+        border: 2px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8px;
+    }
+
+    .timeline-item.completed .timeline-marker {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: white;
+    }
+
+    .timeline-content {
+        margin-left: 25px;
+        font-size: 14px;
+    }
+
+    .timeline-item.completed .timeline-content {
+        color: #28a745;
+        font-weight: 500;
+    }
+</style>
+
+@code {
+    [Parameter] public MergeProgress CurrentProgress { get; set; } = new();
+
+    private string GetStatusText()
+    {
+        return CurrentProgress.Status switch
+        {
+            MergeStatus.Idle => "Ready",
+            MergeStatus.Uploading => "Uploading",
+            MergeStatus.Uploaded => "Uploaded",
+            MergeStatus.Merging => "Merging",
+            MergeStatus.Completed => "Completed",
+            MergeStatus.Failed => "Failed",
+            _ => "Unknown"
+        };
+    }
+
+    private string GetStatusBadgeClass()
+    {
+        return CurrentProgress.Status switch
+        {
+            MergeStatus.Idle => "bg-secondary",
+            MergeStatus.Uploading => "bg-info",
+            MergeStatus.Uploaded => "bg-primary",
+            MergeStatus.Merging => "bg-warning",
+            MergeStatus.Completed => "bg-success",
+            MergeStatus.Failed => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetProgressBarClass()
+    {
+        return CurrentProgress.Status switch
+        {
+            MergeStatus.Uploading => "progress-bar-striped progress-bar-animated bg-info",
+            MergeStatus.Merging => "progress-bar-striped progress-bar-animated bg-warning",
+            MergeStatus.Completed => "bg-success",
+            MergeStatus.Failed => "bg-danger",
+            _ => "bg-primary"
+        };
+    }
+
+    private bool IsStepCompleted(MergeStatus step)
+    {
+        return CurrentProgress.Status switch
+        {
+            MergeStatus.Completed => true,
+            MergeStatus.Merging => step == MergeStatus.Uploading,
+            MergeStatus.Uploaded => step == MergeStatus.Uploading,
+            _ => false
+        };
+    }
+}

@@ -1,0 +1,11 @@
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Shared\bin\Debug\net9.0\MultiplayerShooter.Shared.deps.json
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Shared\bin\Debug\net9.0\MultiplayerShooter.Shared.dll
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Shared\bin\Debug\net9.0\MultiplayerShooter.Shared.pdb
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Shared\obj\Debug\net9.0\MultiplayerShooter.Shared.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Shared\obj\Debug\net9.0\MultiplayerShooter.Shared.AssemblyInfoInputs.cache
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Shared\obj\Debug\net9.0\MultiplayerShooter.Shared.AssemblyInfo.cs
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Shared\obj\Debug\net9.0\MultiplayerShooter.Shared.csproj.CoreCompileInputs.cache
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Shared\obj\Debug\net9.0\MultiplayerShooter.Shared.dll
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Shared\obj\Debug\net9.0\refint\MultiplayerShooter.Shared.dll
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Shared\obj\Debug\net9.0\MultiplayerShooter.Shared.pdb
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Shared\obj\Debug\net9.0\ref\MultiplayerShooter.Shared.dll

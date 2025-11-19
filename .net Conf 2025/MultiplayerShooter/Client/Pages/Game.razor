@@ -1,0 +1,489 @@
+@page "/game"
+@using Microsoft.AspNetCore.SignalR.Client
+@using MultiplayerShooter.Shared.Models
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<PageTitle>Multiplayer Shooter</PageTitle>
+
+<div class="game-container">
+    @if (!_isInGame)
+    {
+        <div class="menu">
+            <h1>🚀 Multiplayer Shooter</h1>
+            <div class="menu-content">
+                <input @bind="_playerName" placeholder="Enter your name" class="input-field" />
+                
+                <button @onclick="JoinOrCreateRoom" class="btn btn-primary" disabled="@(!IsConnected)">
+                    Play Now
+                </button>
+                
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <div class="error">@_errorMessage</div>
+                }
+                
+                @if (!string.IsNullOrEmpty(_currentRoomCode))
+                {
+                    <div class="room-code">
+                        <h3>Room Code: @_currentRoomCode</h3>
+                        <p>Waiting for players to join...</p>
+                    </div>
+                }
+                
+                <div class="connection-status">
+                    Status: @(_hubConnection?.State.ToString() ?? "Disconnected")
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="game-ui">
+            <div class="hud">
+                <div class="health-bar">
+                    <span>Health: @_localPlayer?.Health</span>
+                    <div class="health-fill" style="width: @(_localPlayer?.Health ?? 0)%"></div>
+                </div>
+                <div class="player-info">
+                    <span>Players: @_players.Count</span>
+                </div>
+            </div>
+            
+            <!-- Scoreboard -->
+            <div class="scoreboard">
+                <h3>Scoreboard</h3>
+                <div class="scoreboard-content">
+                    @foreach (var player in _players.Values.OrderByDescending(p => p.Kills).ThenBy(p => p.Deaths))
+                    {
+                        <div class="scoreboard-row @(player.Id == _localPlayer?.Id ? "local-player" : "")">
+                            <span class="player-name">@player.Name</span>
+                            <span class="player-stats">
+                                <span class="kills">K: @player.Kills</span>
+                                <span class="deaths">D: @player.Deaths</span>
+                                <span class="health">HP: @player.Health</span>
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <canvas @ref="_canvasRef" width="800" height="600" 
+                    @onmousedown="OnMouseDown"
+                    @onmousemove="OnMouseMove"
+                    tabindex="0"></canvas>
+            
+            @if (_isMobile)
+            {
+                <div class="mobile-controls">
+                    <div class="joystick-container" 
+                         @ontouchstart="OnJoystickTouchStart"
+                         @ontouchmove="OnJoystickTouchMove"
+                         @ontouchend="OnJoystickTouchEnd">
+                        <div class="joystick-base">
+                            <div class="joystick-stick" style="transform: translate(@(_joystickX)px, @(_joystickY)px)"></div>
+                        </div>
+                    </div>
+                    <button class="shoot-button" @ontouchstart="OnShootTouch">🔫</button>
+                </div>
+            }
+            
+            @if (!_localPlayer?.IsAlive ?? false)
+            {
+                <div class="death-screen">
+                    <h2>You Died!</h2>
+                    <button @onclick="Respawn" class="btn btn-primary">Respawn</button>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private HubConnection? _hubConnection;
+    private ElementReference _canvasRef;
+    private string _playerName = "";
+    private string _roomCode = "";
+    private string _currentRoomCode = "";
+    private string _errorMessage = "";
+    private bool _isInGame = false;
+    private bool _isMobile = false;
+    
+    private Player? _localPlayer;
+    private Dictionary<string, Player> _players = new();
+    private List<Bullet> _bullets = new();
+    
+    private bool[] _keys = new bool[256];
+    private float _mouseAngle = 0;
+    private bool _shooting = false;
+    private DateTime _lastShot = DateTime.MinValue;
+    
+    // Mobile joystick
+    private float _joystickX = 0;
+    private float _joystickY = 0;
+    private bool _joystickActive = false;
+    
+    private System.Threading.Timer? _gameLoopTimer;
+    
+    private bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isMobile = await JS.InvokeAsync<bool>("isMobileDevice");
+        
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/gamehub"))
+            .Build();
+
+        // Register SignalR event handlers
+        _hubConnection.On<Player>("PlayerJoined", (player) =>
+        {
+            _players[player.Id] = player;
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hubConnection.On<GameState>("GameState", (state) =>
+        {
+            foreach (var player in state.Players)
+            {
+                _players[player.Id] = player;
+                if (player.Id == _hubConnection.ConnectionId)
+                    _localPlayer = player;
+            }
+            _bullets = state.Bullets;
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hubConnection.On<Player>("PlayerMoved", (player) =>
+        {
+            if (_players.ContainsKey(player.Id))
+                _players[player.Id] = player;
+        });
+
+        _hubConnection.On<Bullet>("BulletFired", (bullet) =>
+        {
+            _bullets.Add(bullet);
+        });
+
+        _hubConnection.On<string, int>("PlayerHit", (playerId, health) =>
+        {
+            if (_players.TryGetValue(playerId, out var player))
+            {
+                player.Health = health;
+                if (playerId == _localPlayer?.Id)
+                {
+                    _localPlayer.Health = health;
+                    InvokeAsync(StateHasChanged);
+                }
+            }
+        });
+
+        _hubConnection.On<string>("PlayerDied", (playerId) =>
+        {
+            if (playerId == _localPlayer?.Id)
+                InvokeAsync(StateHasChanged);
+        });
+        
+        _hubConnection.On<Player, Player>("ScoreUpdated", (shooter, victim) =>
+        {
+            if (_players.ContainsKey(shooter.Id))
+                _players[shooter.Id] = shooter;
+            if (_players.ContainsKey(victim.Id))
+                _players[victim.Id] = victim;
+            
+            InvokeAsync(StateHasChanged);
+        });
+
+        _hubConnection.On<Player>("PlayerRespawned", (player) =>
+        {
+            if (_players.ContainsKey(player.Id))
+            {
+                _players[player.Id] = player;
+                if (player.Id == _localPlayer?.Id)
+                {
+                    _localPlayer = player;
+                    InvokeAsync(StateHasChanged);
+                }
+            }
+        });
+
+        _hubConnection.On<string>("PlayerLeft", (playerId) =>
+        {
+            _players.Remove(playerId);
+            InvokeAsync(StateHasChanged);
+        });
+
+        await _hubConnection.StartAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("setupKeyboardInput", DotNetObjectReference.Create(this));
+        }
+        
+        // Initialize canvas after joining game
+        if (_isInGame && _canvasRef.Id != null && _gameLoopTimer == null)
+        {
+            await JS.InvokeVoidAsync("initializeCanvas", _canvasRef);
+            StartGameLoop();
+        }
+    }
+
+    private async Task JoinOrCreateRoom()
+    {
+        if (string.IsNullOrWhiteSpace(_playerName)) return;
+        
+        try
+        {
+            _currentRoomCode = await _hubConnection!.InvokeAsync<string>("JoinOrCreateRoom", _playerName);
+            _isInGame = true;
+            _localPlayer = new Player { Id = _hubConnection.ConnectionId!, Name = _playerName };
+            _players[_localPlayer.Id] = _localPlayer;
+            
+            // Trigger re-render to show canvas and initialize game loop
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private async Task CreateRoom()
+    {
+        if (string.IsNullOrWhiteSpace(_playerName)) return;
+        
+        try
+        {
+            _currentRoomCode = await _hubConnection!.InvokeAsync<string>("CreateRoom", _playerName);
+            _isInGame = true;
+            _localPlayer = new Player { Id = _hubConnection.ConnectionId!, Name = _playerName };
+            _players[_localPlayer.Id] = _localPlayer;
+            
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private async Task JoinRoom()
+    {
+        if (string.IsNullOrWhiteSpace(_playerName) || string.IsNullOrWhiteSpace(_roomCode)) return;
+        
+        try
+        {
+            var success = await _hubConnection!.InvokeAsync<bool>("JoinRoom", _roomCode.ToUpper(), _playerName);
+            if (success)
+            {
+                _isInGame = true;
+                _currentRoomCode = _roomCode.ToUpper();
+                _errorMessage = "";
+                
+                await InvokeAsync(StateHasChanged);
+            }
+            else
+            {
+                _errorMessage = "Room not found or full!";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private void StartGameLoop()
+    {
+        _gameLoopTimer = new System.Threading.Timer(async _ => await GameLoop(), null, 0, 16); // ~60 FPS
+    }
+
+    private async Task GameLoop()
+    {
+        if (_localPlayer == null || !_localPlayer.IsAlive) return;
+
+        // Update position based on input
+        float speed = 3f;
+        float dx = 0, dy = 0;
+
+        if (_isMobile && _joystickActive)
+        {
+            dx = _joystickX * speed / 30;
+            dy = _joystickY * speed / 30;
+        }
+        else
+        {
+            if (_keys['W'] || _keys['w']) dy -= speed;
+            if (_keys['S'] || _keys['s']) dy += speed;
+            if (_keys['A'] || _keys['a']) dx -= speed;
+            if (_keys['D'] || _keys['d']) dx += speed;
+        }
+
+        if (dx != 0 || dy != 0)
+        {
+            _localPlayer.X += dx;
+            _localPlayer.Y += dy;
+            
+            // Keep in bounds
+            _localPlayer.X = Math.Clamp(_localPlayer.X, 20, 780);
+            _localPlayer.Y = Math.Clamp(_localPlayer.Y, 20, 580);
+            
+            await _hubConnection!.SendAsync("UpdatePosition", _localPlayer.X, _localPlayer.Y, _mouseAngle);
+        }
+
+        // Update bullets
+        for (int i = _bullets.Count - 1; i >= 0; i--)
+        {
+            var bullet = _bullets[i];
+            bullet.X += bullet.VelocityX;
+            bullet.Y += bullet.VelocityY;
+
+            // Check collisions
+            foreach (var player in _players.Values.Where(p => p.IsAlive && p.Id != bullet.PlayerId))
+            {
+                var distance = MathF.Sqrt(
+                    MathF.Pow(bullet.X - player.X, 2) + 
+                    MathF.Pow(bullet.Y - player.Y, 2));
+
+                if (distance < 15)
+                {
+                    await _hubConnection!.SendAsync("CheckHit", bullet.Id, player.Id);
+                    _bullets.RemoveAt(i);
+                    break;
+                }
+            }
+
+            // Remove out of bounds
+            if (bullet.X < 0 || bullet.X > 800 || bullet.Y < 0 || bullet.Y > 600)
+                _bullets.RemoveAt(i);
+        }
+
+        // Render
+        await RenderGame();
+    }
+
+    private async Task RenderGame()
+    {
+        await JS.InvokeVoidAsync("clearCanvas", _canvasRef);
+        
+        // Draw players
+        foreach (var player in _players.Values)
+        {
+            await JS.InvokeVoidAsync("drawPlayer", _canvasRef, 
+                player.X, player.Y, player.Color, player.Angle, player.IsAlive);
+            await JS.InvokeVoidAsync("drawText", _canvasRef, 
+                player.Name, player.X, player.Y - 30, "white");
+        }
+
+        // Draw bullets
+        foreach (var bullet in _bullets)
+        {
+            await JS.InvokeVoidAsync("drawBullet", _canvasRef, bullet.X, bullet.Y);
+        }
+    }
+
+    [JSInvokable]
+    public void OnKeyDown(string key)
+    {
+        if (key.Length == 1)
+            _keys[key[0]] = true;
+    }
+
+    [JSInvokable]
+    public void OnKeyUp(string key)
+    {
+        if (key.Length == 1)
+            _keys[key[0]] = false;
+    }
+
+    private void OnMouseDown(MouseEventArgs e)
+    {
+        _shooting = true;
+        Shoot();
+    }
+
+    private void OnMouseMove(MouseEventArgs e)
+    {
+        if (_localPlayer == null) return;
+        
+        _mouseAngle = MathF.Atan2(
+            (float)e.OffsetY - _localPlayer.Y,
+            (float)e.OffsetX - _localPlayer.X);
+        _localPlayer.Angle = _mouseAngle;
+    }
+
+    private async void Shoot()
+    {
+        if ((DateTime.UtcNow - _lastShot).TotalMilliseconds < 250) return;
+        if (_localPlayer == null || !_localPlayer.IsAlive) return;
+
+        _lastShot = DateTime.UtcNow;
+        await _hubConnection!.SendAsync("Shoot", _mouseAngle);
+    }
+
+    private void OnJoystickTouchStart(TouchEventArgs e)
+    {
+        _joystickActive = true;
+    }
+
+    private void OnJoystickTouchMove(TouchEventArgs e)
+    {
+        if (e.Touches.Length > 0)
+        {
+            var touch = e.Touches[0];
+            
+            // Simple joystick: get relative position from screen
+            // Assuming joystick is in bottom left corner
+            var baseX = 60.0; // Approximate center of joystick base
+            var baseY = _isMobile ? (600.0 - 60.0) : 540.0; // Bottom of screen minus offset
+            
+            _joystickX = (float)(touch.ClientX - baseX);
+            _joystickY = (float)(touch.ClientY - baseY);
+            
+            // Limit joystick movement to a 30px radius
+            var distance = MathF.Sqrt(_joystickX * _joystickX + _joystickY * _joystickY);
+            if (distance > 30)
+            {
+                _joystickX = _joystickX / distance * 30;
+                _joystickY = _joystickY / distance * 30;
+            }
+            
+            // Update player angle based on joystick direction
+            if (_localPlayer != null && distance > 5)
+            {
+                _mouseAngle = MathF.Atan2(_joystickY, _joystickX);
+                _localPlayer.Angle = _mouseAngle;
+            }
+        }
+    }
+
+    private void OnJoystickTouchEnd(TouchEventArgs e)
+    {
+        _joystickActive = false;
+        _joystickX = 0;
+        _joystickY = 0;
+    }
+
+    private void OnShootTouch(TouchEventArgs e)
+    {
+        Shoot();
+    }
+
+    private async Task Respawn()
+    {
+        await _hubConnection!.SendAsync("Respawn");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _gameLoopTimer?.Dispose();
+        if (_hubConnection is not null)
+        {
+            await _hubConnection.DisposeAsync();
+        }
+    }
+}

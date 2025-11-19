@@ -1,0 +1,248 @@
+@page "/upload"
+@using PdfMergerApp.Shared.Models
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<PageTitle>PDF Merger</PageTitle>
+
+<h1>PDF Merger</h1>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Upload PDF Files</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="fileInput" class="form-label">Select PDF files to merge:</label>
+                        <InputFile id="fileInput" OnChange="HandleFileSelection" multiple accept=".pdf" class="form-control" />
+                        <div class="form-text">Select multiple PDF files. They will be merged in the order shown below.</div>
+                    </div>
+
+                    @if (selectedFiles.Any())
+                    {
+                        <div class="mb-3">
+                            <h5>Selected Files (@selectedFiles.Count)</h5>
+                            <div class="list-group">
+                                @for (int i = 0; i < selectedFiles.Count; i++)
+                                {
+                                    var index = i;
+                                    var file = selectedFiles[i];
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>@file.FileName</strong>
+                                            <br>
+                                            <small class="text-muted">@FormatFileSize(file.FileSize)</small>
+                                        </div>
+                                        <div class="btn-group" role="group">
+                                            @if (index > 0)
+                                            {
+                                                <button type="button" class="btn btn-outline-primary btn-sm" @onclick="() => MoveUp(index)">↑</button>
+                                            }
+                                            @if (index < selectedFiles.Count - 1)
+                                            {
+                                                <button type="button" class="btn btn-outline-primary btn-sm" @onclick="() => MoveDown(index)">↓</button>
+                                            }
+                                            <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => RemoveFile(index)">Remove</button>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="mergedFileName" class="form-label">Merged file name:</label>
+                            <input type="text" id="mergedFileName" @bind="mergedFileName" class="form-control" placeholder="merged-document.pdf" />
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="button" class="btn btn-primary btn-lg" @onclick="MergePdfs" disabled="@isProcessing">
+                                @if (isProcessing)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                    <span>Merging PDFs...</span>
+                                }
+                                else
+                                {
+                                    <span>Merge PDFs</span>
+                                }
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <PdfMergeProgress CurrentProgress="currentProgress" />
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-3" role="alert">
+        <strong>Error:</strong> @errorMessage
+    </div>
+}
+
+@code {
+    private List<FileUploadInfo> selectedFiles = new();
+    private string mergedFileName = "merged-document.pdf";
+    private bool isProcessing = false;
+    private string errorMessage = string.Empty;
+    private MergeProgress currentProgress = new();
+
+    private async Task HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        errorMessage = string.Empty;
+        var files = e.GetMultipleFiles(10); // Limit to 10 files
+
+        foreach (var file in files)
+        {
+            // Validate file type
+            if (!file.ContentType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase) && 
+                !file.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                errorMessage = $"File '{file.Name}' is not a PDF file.";
+                continue;
+            }
+
+            // Validate file size (max 50MB per file)
+            if (file.Size > 50 * 1024 * 1024)
+            {
+                errorMessage = $"File '{file.Name}' is too large. Maximum size is 50MB.";
+                continue;
+            }
+
+            // Read file data
+            using var stream = new MemoryStream();
+            await file.OpenReadStream(maxAllowedSize: 50 * 1024 * 1024).CopyToAsync(stream);
+            
+            var fileInfo = new FileUploadInfo
+            {
+                FileName = file.Name,
+                FileSize = file.Size,
+                ContentType = file.ContentType,
+                Order = selectedFiles.Count,
+                FileData = stream.ToArray()
+            };
+
+            selectedFiles.Add(fileInfo);
+        }
+
+        StateHasChanged();
+    }
+
+    private void MoveUp(int index)
+    {
+        if (index > 0)
+        {
+            var file = selectedFiles[index];
+            selectedFiles.RemoveAt(index);
+            selectedFiles.Insert(index - 1, file);
+            UpdateFileOrders();
+        }
+    }
+
+    private void MoveDown(int index)
+    {
+        if (index < selectedFiles.Count - 1)
+        {
+            var file = selectedFiles[index];
+            selectedFiles.RemoveAt(index);
+            selectedFiles.Insert(index + 1, file);
+            UpdateFileOrders();
+        }
+    }
+
+    private void RemoveFile(int index)
+    {
+        selectedFiles.RemoveAt(index);
+        UpdateFileOrders();
+    }
+
+    private void UpdateFileOrders()
+    {
+        for (int i = 0; i < selectedFiles.Count; i++)
+        {
+            selectedFiles[i].Order = i;
+        }
+    }
+
+    private async Task MergePdfs()
+    {
+        if (!selectedFiles.Any())
+        {
+            errorMessage = "Please select at least one PDF file.";
+            return;
+        }
+
+        isProcessing = true;
+        errorMessage = string.Empty;
+        currentProgress = new MergeProgress { Status = MergeStatus.Uploading, Message = "Preparing files...", PercentComplete = 10 };
+
+        try
+        {
+            var request = new MergeRequest
+            {
+                Files = selectedFiles,
+                MergedFileName = string.IsNullOrWhiteSpace(mergedFileName) ? "merged-document.pdf" : mergedFileName
+            };
+
+            currentProgress = new MergeProgress { Status = MergeStatus.Merging, Message = "Merging PDFs...", PercentComplete = 50 };
+            StateHasChanged();
+
+            var response = await Http.PostAsJsonAsync("/api/pdf/merge", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                currentProgress = new MergeProgress { Status = MergeStatus.Completed, Message = "Merge completed!", PercentComplete = 100 };
+                
+                // Download the merged file
+                var fileBytes = await response.Content.ReadAsByteArrayAsync();
+                var fileName = request.MergedFileName;
+                
+                await DownloadFile(fileBytes, fileName);
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"Merge failed: {errorContent}";
+                currentProgress = new MergeProgress { Status = MergeStatus.Failed, Message = "Merge failed", PercentComplete = 0, ErrorDetails = errorContent };
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+            currentProgress = new MergeProgress { Status = MergeStatus.Failed, Message = "Merge failed", PercentComplete = 0, ErrorDetails = ex.Message };
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DownloadFile(byte[] fileBytes, string fileName)
+    {
+        var base64 = Convert.ToBase64String(fileBytes);
+        await JSRuntime.InvokeVoidAsync("downloadFile", base64, fileName);
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+}
