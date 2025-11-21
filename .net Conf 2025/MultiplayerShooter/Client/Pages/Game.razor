@@ -77,15 +77,43 @@
             @if (_isMobile)
             {
                 <div class="mobile-controls">
-                    <div class="joystick-container" 
-                         @ontouchstart="OnJoystickTouchStart"
-                         @ontouchmove="OnJoystickTouchMove"
-                         @ontouchend="OnJoystickTouchEnd">
-                        <div class="joystick-base">
-                            <div class="joystick-stick" style="transform: translate(@(_joystickX)px, @(_joystickY)px)"></div>
+                    <div class="dpad-container">
+                        <button class="dpad-btn dpad-up" 
+                                @ontouchstart="() => OnDirectionPress('W')"
+                                @ontouchend="() => OnDirectionRelease('W')"
+                                @onmousedown="() => OnDirectionPress('W')"
+                                @onmouseup="() => OnDirectionRelease('W')">
+                            ▲
+                        </button>
+                        <div class="dpad-middle">
+                            <button class="dpad-btn dpad-left" 
+                                    @ontouchstart="() => OnDirectionPress('A')"
+                                    @ontouchend="() => OnDirectionRelease('A')"
+                                    @onmousedown="() => OnDirectionPress('A')"
+                                    @onmouseup="() => OnDirectionRelease('A')">
+                                ◄
+                            </button>
+                            <button class="dpad-btn dpad-right" 
+                                    @ontouchstart="() => OnDirectionPress('D')"
+                                    @ontouchend="() => OnDirectionRelease('D')"
+                                    @onmousedown="() => OnDirectionPress('D')"
+                                    @onmouseup="() => OnDirectionRelease('D')">
+                                ►
+                            </button>
                         </div>
+                        <button class="dpad-btn dpad-down" 
+                                @ontouchstart="() => OnDirectionPress('S')"
+                                @ontouchend="() => OnDirectionRelease('S')"
+                                @onmousedown="() => OnDirectionPress('S')"
+                                @onmouseup="() => OnDirectionRelease('S')">
+                            ▼
+                        </button>
                     </div>
-                    <button class="shoot-button" @ontouchstart="OnShootTouch">🔫</button>
+                    <button class="shoot-button" 
+                            @ontouchstart="OnShootTouch"
+                            @onmousedown="OnShootTouch">
+                        🔫
+                    </button>
                 </div>
             }
             
@@ -118,11 +146,6 @@
     private float _mouseAngle = 0;
     private bool _shooting = false;
     private DateTime _lastShot = DateTime.MinValue;
-    
-    // Mobile joystick
-    private float _joystickX = 0;
-    private float _joystickY = 0;
-    private bool _joystickActive = false;
     
     private System.Threading.Timer? _gameLoopTimer;
     
@@ -310,18 +333,10 @@
         float speed = 3f;
         float dx = 0, dy = 0;
 
-        if (_isMobile && _joystickActive)
-        {
-            dx = _joystickX * speed / 30;
-            dy = _joystickY * speed / 30;
-        }
-        else
-        {
-            if (_keys['W'] || _keys['w']) dy -= speed;
-            if (_keys['S'] || _keys['s']) dy += speed;
-            if (_keys['A'] || _keys['a']) dx -= speed;
-            if (_keys['D'] || _keys['d']) dx += speed;
-        }
+        if (_keys['W'] || _keys['w']) dy -= speed;
+        if (_keys['S'] || _keys['s']) dy += speed;
+        if (_keys['A'] || _keys['a']) dx -= speed;
+        if (_keys['D'] || _keys['d']) dx += speed;
 
         if (dx != 0 || dy != 0)
         {
@@ -332,7 +347,11 @@
             _localPlayer.X = Math.Clamp(_localPlayer.X, 20, 780);
             _localPlayer.Y = Math.Clamp(_localPlayer.Y, 20, 580);
             
-            await _hubConnection!.SendAsync("UpdatePosition", _localPlayer.X, _localPlayer.Y, _mouseAngle);
+            // Update angle based on movement direction
+            float angle = MathF.Atan2(dy, dx);
+            _localPlayer.Angle = angle;
+            
+            await _hubConnection!.SendAsync("UpdatePosition", _localPlayer.X, _localPlayer.Y, angle);
         }
 
         // Update bullets
@@ -425,50 +444,17 @@
         await _hubConnection!.SendAsync("Shoot", _mouseAngle);
     }
 
-    private void OnJoystickTouchStart(TouchEventArgs e)
+    private void OnDirectionPress(char key)
     {
-        _joystickActive = true;
+        _keys[key] = true;
     }
 
-    private void OnJoystickTouchMove(TouchEventArgs e)
+    private void OnDirectionRelease(char key)
     {
-        if (e.Touches.Length > 0)
-        {
-            var touch = e.Touches[0];
-            
-            // Simple joystick: get relative position from screen
-            // Assuming joystick is in bottom left corner
-            var baseX = 60.0; // Approximate center of joystick base
-            var baseY = _isMobile ? (600.0 - 60.0) : 540.0; // Bottom of screen minus offset
-            
-            _joystickX = (float)(touch.ClientX - baseX);
-            _joystickY = (float)(touch.ClientY - baseY);
-            
-            // Limit joystick movement to a 30px radius
-            var distance = MathF.Sqrt(_joystickX * _joystickX + _joystickY * _joystickY);
-            if (distance > 30)
-            {
-                _joystickX = _joystickX / distance * 30;
-                _joystickY = _joystickY / distance * 30;
-            }
-            
-            // Update player angle based on joystick direction
-            if (_localPlayer != null && distance > 5)
-            {
-                _mouseAngle = MathF.Atan2(_joystickY, _joystickX);
-                _localPlayer.Angle = _mouseAngle;
-            }
-        }
+        _keys[key] = false;
     }
 
-    private void OnJoystickTouchEnd(TouchEventArgs e)
-    {
-        _joystickActive = false;
-        _joystickX = 0;
-        _joystickY = 0;
-    }
-
-    private void OnShootTouch(TouchEventArgs e)
+    private void OnShootTouch()
     {
         Shoot();
     }

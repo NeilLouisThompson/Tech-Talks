@@ -66,3 +66,4 @@ C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 20
 C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Server\obj\Debug\net9.0\MultiplayerShooter.Server.genruntimeconfig.cache
 C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Server\obj\Debug\net9.0\ref\MultiplayerShooter.Server.dll
 C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Server\obj\Debug\net9.0\swae.build.ex.cache
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Server\obj\Debug\net9.0\MultiplayerShooter.Server.sourcelink.json

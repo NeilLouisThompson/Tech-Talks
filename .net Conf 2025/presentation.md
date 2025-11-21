@@ -98,7 +98,7 @@ A **real-time multiplayer space shooter** where:
 - Each player controls a spaceship
 - Shoot bullets at other players
 - Real-time position sync
-- **Mobile-responsive** with virtual joystick and touch controls
+- **Mobile-responsive** with D-pad button controls for precise movement
 - Local network play
 
 **Demo Time!** _(Show the finished game)_
@@ -1022,23 +1022,37 @@ window.drawText = (canvas, text, x, y, color) => {
 
 ## 6. Mobile Support (3 min)
 
-### Virtual Joystick Implementation
+### D-Pad Button Controls
 
-The game includes touch controls for mobile devices:
+The game includes responsive touch controls with directional buttons for mobile devices:
 
 ```razor
 @if (_isMobile)
 {
     <div class="mobile-controls">
-        <div class="joystick-container"
-             @ontouchstart="OnJoystickTouchStart"
-             @ontouchmove="OnJoystickTouchMove"
-             @ontouchend="OnJoystickTouchEnd">
-            <div class="joystick-base">
-                <div class="joystick-stick"
-                     style="transform: translate(@(_joystickX)px, @(_joystickY)px)">
-                </div>
+        <div class="dpad-container">
+            <button class="dpad-btn dpad-up"
+                    @ontouchstart="() => OnDirectionPress('W')"
+                    @ontouchend="() => OnDirectionRelease('W')">
+                ▲
+            </button>
+            <div class="dpad-middle">
+                <button class="dpad-btn dpad-left"
+                        @ontouchstart="() => OnDirectionPress('A')"
+                        @ontouchend="() => OnDirectionRelease('A')">
+                    ◄
+                </button>
+                <button class="dpad-btn dpad-right"
+                        @ontouchstart="() => OnDirectionPress('D')"
+                        @ontouchend="() => OnDirectionRelease('D')">
+                    ►
+                </button>
             </div>
+            <button class="dpad-btn dpad-down"
+                    @ontouchstart="() => OnDirectionPress('S')"
+                    @ontouchend="() => OnDirectionRelease('S')">
+                ▼
+            </button>
         </div>
         <button class="shoot-button" @ontouchstart="OnShootTouch">🔫</button>
     </div>
@@ -1048,29 +1062,23 @@ The game includes touch controls for mobile devices:
 **Touch Handler Code**:
 
 ```csharp
-private void OnJoystickTouchMove(TouchEventArgs e)
+private void OnDirectionPress(char key)
 {
-    if (e.Touches.Length > 0)
-    {
-        var touch = e.Touches[0];
-        _joystickX = (float)(touch.ClientX - 60);
-        _joystickY = (float)(touch.ClientY - 500);
+    _keys[key] = true;  // Set the direction key as active
+}
 
-        // Clamp to joystick radius
-        var distance = MathF.Sqrt(_joystickX * _joystickX + _joystickY * _joystickY);
-        if (distance > 30)
-        {
-            _joystickX = _joystickX / distance * 30;
-            _joystickY = _joystickY / distance * 30;
-        }
-    }
+private void OnDirectionRelease(char key)
+{
+    _keys[key] = false;  // Release the direction key
 }
 ```
 
 **Why This Matters**:
 
-- No external libraries needed
-- Pure Blazor touch event handling
+- No external libraries needed - pure Blazor!
+- Responsive D-pad buttons provide precise control
+- Touch events handled natively in C#
+- Full-screen responsive design on mobile
 - Works on any mobile browser
 - Same codebase for desktop and mobile!
 
@@ -1114,14 +1122,14 @@ dotnet run
 4. **Connect from Devices**:
 
 - **Desktop**: `http://localhost:5000`
-- **Mobile**: `http://192.168.1.100:5000` (use your IP)
+- **Mobile**: `http://10.112.4.38:3000` (use your local IP on port 3000)
 
 ### Testing Checklist
 
 ✅ Click "Play Now" on desktop to auto-join  
 ✅ Join from phone - automatically matched to same room  
-✅ Test movement (WASD on desktop, joystick on mobile)  
-✅ Test shooting (click on desktop, button on mobile)  
+✅ Test movement (WASD on desktop, D-pad buttons on mobile)  
+✅ Test shooting (click on desktop, shoot button on mobile)  
 ✅ Verify health decreases on hit  
 ✅ Test respawn functionality  
 ✅ Check player disconnect handling

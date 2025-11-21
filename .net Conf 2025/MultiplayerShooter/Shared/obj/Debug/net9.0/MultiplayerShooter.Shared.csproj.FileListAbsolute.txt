@@ -9,3 +9,4 @@ C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 20
 C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Shared\obj\Debug\net9.0\refint\MultiplayerShooter.Shared.dll
 C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Shared\obj\Debug\net9.0\MultiplayerShooter.Shared.pdb
 C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Shared\obj\Debug\net9.0\ref\MultiplayerShooter.Shared.dll
+C:\Users\thompson\OneDrive - Accso\Desktop\Presentations\Tech Talks\.net Conf 2025\MultiplayerShooter\Shared\obj\Debug\net9.0\MultiplayerShooter.Shared.sourcelink.json

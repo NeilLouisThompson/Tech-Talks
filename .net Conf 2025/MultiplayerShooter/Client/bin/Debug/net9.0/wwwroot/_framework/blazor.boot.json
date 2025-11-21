@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "MultiplayerShooter.Client",
   "resources": {
-    "hash": "sha256-ljVTSOcCCfuG5sdPjEg+IDIUtMe/IuKS4GtE5d2Wvgs=",
+    "hash": "sha256-7PTaYbjM8SnLl+JUXNDFrVQPnre3leTSSCoR9OTgpmQ=",
     "fingerprinting": {
       "Microsoft.AspNetCore.Authorization.qe23mgxr71.wasm": "Microsoft.AspNetCore.Authorization.wasm",
       "Microsoft.AspNetCore.Components.flveird317.wasm": "Microsoft.AspNetCore.Components.wasm",
@@ -210,10 +210,10 @@
       "icudt_CJK.tjcz0u77k5.dat": "icudt_CJK.dat",
       "icudt_EFIGS.tptq2av103.dat": "icudt_EFIGS.dat",
       "icudt_no_CJK.lfu7j35m59.dat": "icudt_no_CJK.dat",
-      "MultiplayerShooter.Shared.bj4yk5q07l.wasm": "MultiplayerShooter.Shared.wasm",
-      "MultiplayerShooter.Shared.niidv5jhaw.pdb": "MultiplayerShooter.Shared.pdb",
-      "MultiplayerShooter.Client.34l7inxu9p.wasm": "MultiplayerShooter.Client.wasm",
-      "MultiplayerShooter.Client.b74w3g2cic.pdb": "MultiplayerShooter.Client.pdb"
+      "MultiplayerShooter.Shared.omduttun5f.wasm": "MultiplayerShooter.Shared.wasm",
+      "MultiplayerShooter.Shared.419r7ohhm1.pdb": "MultiplayerShooter.Shared.pdb",
+      "MultiplayerShooter.Client.ws2j8bplju.wasm": "MultiplayerShooter.Client.wasm",
+      "MultiplayerShooter.Client.lnoyg4x5k0.pdb": "MultiplayerShooter.Client.pdb"
     },
     "jsModuleNative": {
       "dotnet.native.l4ptthxatg.js": "sha256-ddUN4+taa/Qv7Mr8mLpunJO+0Xw3ViOqBvedhe57/hA="
@@ -432,12 +432,12 @@
       "WindowsBase.vy2l5u79y6.wasm": "sha256-ufB9Mo5joMyUs3DzXWWBFFIZNEVrt6h9N5stYB6Oln4=",
       "mscorlib.xd6mv31d55.wasm": "sha256-1YSLR2eZt3ceALFV//vZUF2AloxVil3VlrW1zZYPSEI=",
       "netstandard.kaml52uspo.wasm": "sha256-HLEwBpLfzKw2/zGSVzHzFJxznCkt/WIjahrziiMrOpA=",
-      "MultiplayerShooter.Shared.bj4yk5q07l.wasm": "sha256-d7PwXVBvizUdheiLNI2Ln8ZxZj2z9cHwWEMZA3Y4Qi4=",
-      "MultiplayerShooter.Client.34l7inxu9p.wasm": "sha256-owRhCeQ6psdXpcpk7+aZ+jIi3Gv2JgFoIX9wi4zIv8A="
+      "MultiplayerShooter.Shared.omduttun5f.wasm": "sha256-gO6xOFc7B9zfudOosuiBbTG3mrUcoWzrDs7js2Yykko=",
+      "MultiplayerShooter.Client.ws2j8bplju.wasm": "sha256-8HieZb2KmJlr7YG/hKcSWEfCzNYPu9u7UzG/sccyRUE="
     },
     "pdb": {
-      "MultiplayerShooter.Shared.niidv5jhaw.pdb": "sha256-/8GTZm9jqgACBGu0MP58slrp8PxoNmguA/la/Fjxymo=",
-      "MultiplayerShooter.Client.b74w3g2cic.pdb": "sha256-RyApvFbg+y1aRxYPYxVHbm3kwu0JE1WrAcvbGSFKLyU="
+      "MultiplayerShooter.Shared.419r7ohhm1.pdb": "sha256-eH3CpF5BtrZIn7lH8rFxrBhE0XDcyQFkTFjs+4QGp4g=",
+      "MultiplayerShooter.Client.lnoyg4x5k0.pdb": "sha256-r162KzggGAiGGTVCvz9p1q6D5ccK1YPFasjegohvrmM="
     }
   },
   "cacheBootResources": true,

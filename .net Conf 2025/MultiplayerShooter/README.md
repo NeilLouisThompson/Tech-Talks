@@ -85,8 +85,9 @@ ip addr show
 
 ### Mobile Controls
 
-- **Virtual Joystick** (left): Move
+- **D-Pad Buttons** (left): Up, Down, Left, Right movement
 - **Shoot Button** (right): Fire bullets
+- **Responsive Design**: Full-screen canvas optimized for mobile devices
 
 ### Game Flow
 

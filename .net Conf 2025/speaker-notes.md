@@ -497,37 +497,43 @@ public void OnKeyDown(string key)
 
 **Energy: MEDIUM-HIGH**
 
-**Show the Virtual Joystick**:
+**Show the D-Pad Controls**:
 
 ```razor
-<div class="joystick-container"
-     @ontouchstart="OnJoystickTouchStart"
-     @ontouchmove="OnJoystickTouchMove"
-     @ontouchend="OnJoystickTouchEnd">
+<div class="mobile-controls">
+    <div class="dpad-container">
+        <button class="dpad-btn dpad-up"
+                @ontouchstart="() => OnDirectionPress('W')"
+                @ontouchend="() => OnDirectionRelease('W')">
+            ▲
+        </button>
+        <!-- Left, Right, Down buttons... -->
+    </div>
+    <button class="shoot-button">🔫</button>
+</div>
 ```
 
 **Touch Handler**:
 
 ```csharp
-private void OnJoystickTouchMove(TouchEventArgs e)
+private void OnDirectionPress(char key)
 {
-    var touch = e.Touches[0];
-    _joystickX = (float)(touch.ClientX - 60);
-    _joystickY = (float)(touch.ClientY - 500);
+    _keys[key] = true;  // Set movement key active
+}
 
-    // Clamp to radius
-    var distance = MathF.Sqrt(_joystickX * _joystickX + _joystickY * _joystickY);
-    if (distance > 30)
-    {
-        _joystickX = _joystickX / distance * 30;
-        _joystickY = _joystickY / distance * 30;
-    }
+private void OnDirectionRelease(char key)
+{
+    _keys[key] = false;  // Release movement key
 }
 ```
 
 **Key Point**:
 
-> "Blazor handles touch events natively! No JavaScript, no external libraries. Just C# touch events. This is why Blazor is great for mobile-friendly web apps."
+> "Blazor handles touch events natively! We're using simple button presses - no complex joystick math. The D-pad gives players precise, responsive controls on mobile. And it's just C# - no JavaScript libraries needed!"
+
+**Show Mobile Responsive Design**:
+
+> "The canvas scales to full-screen on mobile devices, and we've added breakpoints for both tablets and phones. Everything from the HUD to the scoreboard adapts automatically using CSS media queries."
 
 **Show Mobile Detection**:
 
@@ -574,7 +580,7 @@ ipconfig
 **4. Join from Phone**:
 
 - Open browser on phone
-- Go to `http://192.168.1.100:5000` (your IP)
+- Go to `http://10.112.4.38:3000` (your IP on port 3000)
 - Enter name, click "Play Now"
 - Automatically joins your room!
 
